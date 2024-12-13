@@ -9,7 +9,9 @@
   },
   "type": "module",
   "dependencies": {
-    "cbor-x": "^1.6.0",
+    "@atproto/api": "^0.13.20",
+    "@atproto/common": "^0.4.5",
+    "@ipld/car": "^5.3.3",
     "zod": "^3.24.1"
   }
 }

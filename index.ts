@@ -1,55 +1,55 @@
-import { decodeMultiple } from "cbor-x";
+import { cborDecode, cborDecodeMulti } from "@atproto/common";
+import { AppBskyFeedPost, ComAtprotoSyncSubscribeRepos } from "@atproto/api";
 import { z } from "zod";
+import { CarReader } from "@ipld/car/reader";
 
 const socket = new WebSocket(
   "wss://bsky.network/xrpc/com.atproto.sync.subscribeRepos"
 );
 
-// message is received
-socket.addEventListener("message", (event) => {
-  const [short, long] = decodeMultiple(event.data) as unknown as [
-    unknown,
-    unknown
-  ];
+type Payload = ComAtprotoSyncSubscribeRepos.Commit & {
+  ops?: ComAtprotoSyncSubscribeRepos.RepoOp[];
+};
 
-  if (!isCommit(short)) {
+// message is received
+socket.addEventListener("message", async (event) => {
+  const [header, payload] = cborDecodeMulti(event.data) as [unknown, Payload];
+
+  if (!isCommit(header)) {
     return;
   }
 
-  try {
-    handleLong(long);
-  } catch (error) {
-    console.error(long);
-    throw error;
+  const { ops, blocks } = payload;
+
+  if (!Array.isArray(ops)) {
+    return;
   }
+
+  const [op] = ops;
+
+  if (op?.action !== "create") {
+    return;
+  }
+
+  const cr = await CarReader.fromBytes(blocks);
+  const block = await cr.get(op.cid);
+
+  if (!block?.bytes) {
+    return;
+  }
+
+  const post = cborDecode(block.bytes) as AppBskyFeedPost.Record;
+
+  console.log(post);
 });
 
-function isCommit(short: unknown) {
+function isCommit(header: unknown) {
   const { t } = z
     .object({
       t: z.string(),
       op: z.number(),
     })
-    .parse(short);
+    .parse(header);
 
   return t === "#commit";
-}
-
-function handleLong(long: unknown) {
-  const { ops } = z
-    .object({
-      ops: z.array(
-        z.object({
-          path: z.string(),
-          action: z.string(),
-        })
-      ),
-    })
-    .parse(long);
-
-  ops.forEach((op) => {
-    if (op.action === "create") {
-      console.log(`CREATE: ${op.path}`);
-    }
-  });
 }
