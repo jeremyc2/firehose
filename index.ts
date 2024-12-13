@@ -19,6 +19,23 @@ socket.addEventListener("message", async (event) => {
     return;
   }
 
+  const post = await getPost(payload);
+
+  console.log(post);
+});
+
+function isCommit(header: unknown) {
+  const { t } = z
+    .object({
+      t: z.string(),
+      op: z.number(),
+    })
+    .parse(header);
+
+  return t === "#commit";
+}
+
+async function getPost(payload: Payload) {
   const { ops, blocks } = payload;
 
   if (!Array.isArray(ops)) {
@@ -40,16 +57,5 @@ socket.addEventListener("message", async (event) => {
 
   const post = cborDecode(block.bytes) as AppBskyFeedPost.Record;
 
-  console.log(post);
-});
-
-function isCommit(header: unknown) {
-  const { t } = z
-    .object({
-      t: z.string(),
-      op: z.number(),
-    })
-    .parse(header);
-
-  return t === "#commit";
+  return post;
 }
