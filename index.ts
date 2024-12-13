@@ -11,6 +11,10 @@ type Payload = ComAtprotoSyncSubscribeRepos.Commit & {
   ops?: ComAtprotoSyncSubscribeRepos.RepoOp[];
 };
 
+function isMatch(text: string) {
+  return text.includes("AOC");
+}
+
 // message is received
 socket.addEventListener("message", async (event) => {
   const [header, payload] = cborDecodeMulti(event.data) as [unknown, Payload];
@@ -25,7 +29,9 @@ socket.addEventListener("message", async (event) => {
     return;
   }
 
-  console.log(post.text);
+  if (isMatch(post.text)) {
+    console.log(post.text);
+  }
 });
 
 function isCommit(header: unknown) {
