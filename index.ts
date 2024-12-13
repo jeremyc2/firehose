@@ -21,7 +21,11 @@ socket.addEventListener("message", async (event) => {
 
   const post = await getPost(payload);
 
-  console.log(post);
+  if (!post) {
+    return;
+  }
+
+  console.log(post.text);
 });
 
 function isCommit(header: unknown) {
