@@ -27,7 +27,7 @@ socket.addEventListener("message", async (event) => {
 
   const [op] = ops;
 
-  if (op?.action !== "create") {
+  if (op?.action !== "create" || !op?.path.startsWith("app.bsky.feed.post/")) {
     return;
   }
 
